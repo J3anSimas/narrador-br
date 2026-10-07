@@ -1,0 +1,27 @@
+{
+  "name": "text-to-speech",
+  "version": "1.0.0",
+  "description": "Separa um texto (ou arquivo de texto) em parágrafos.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "paragrafos": "dist/cli/main.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "start": "tsx src/cli/main.ts"
+  },
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^24.19.1",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.7"
+  },
+  "dependencies": {
+    "openai": "^7.30.0"
+  }
+}

@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.env
+# Áudios gerados pela CLI e pastas de progresso de --audio-file
+*.mp3
+*.wav
+*.partes/
