@@ -3,17 +3,10 @@ import { SINGLE_AUDIO_FORMATS, singleAudioFormatFromPath } from "../audio/single
 import type { InputRequest } from "../input/textInputSource.js";
 import { OUTPUT_FORMATS, type OutputFormat } from "../output/formatParagraphs.js";
 
-/** Pedido de gerar um arquivo de áudio por parágrafo em vez de imprimir os parágrafos. */
-export interface AudioOutputRequest {
-  outputDir: string;
-  voice?: string;
-}
+import type { AudioFileRequest, AudioOutputRequest } from "../jobs/audioJobDependencies.js";
 
-/** Pedido de gerar um único áudio (WAV ou MP3, pela extensão) com todos os parágrafos. */
-export interface AudioFileRequest {
-  outputPath: string;
-  voice?: string;
-}
+// Os pedidos moraram aqui antes de a interface desktop também precisar deles.
+export type { AudioFileRequest, AudioOutputRequest } from "../jobs/audioJobDependencies.js";
 
 export interface CliOptions {
   showHelp: boolean;

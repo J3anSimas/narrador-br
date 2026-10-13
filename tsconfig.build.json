@@ -3,5 +3,11 @@
   "compilerOptions": {
     "rootDir": "src"
   },
-  "include": ["src"]
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "src/desktop/renderer",
+    "src/desktop/preload"
+  ]
 }

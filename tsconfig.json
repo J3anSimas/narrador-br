@@ -12,5 +12,11 @@
     "outDir": "dist",
     "rootDir": "."
   },
-  "include": ["src", "test"]
+  "include": [
+    "src",
+    "test"
+  ],
+  "exclude": [
+    "src/desktop/renderer"
+  ]
 }

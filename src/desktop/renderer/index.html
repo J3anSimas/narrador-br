@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self'; style-src 'self'; media-src tts-audio:; img-src 'self' data:"
+    />
+    <title>Texto em fala</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script defer src="app.js"></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <h1>Texto em fala</h1>
+      <button id="api-key-button" class="key-button" type="button" data-configured="false">
+        <span class="key-dot" aria-hidden="true"></span>
+        <span id="api-key-label">Chave da OpenAI</span>
+      </button>
+    </header>
+
+    <main class="workspace">
+      <section class="text-pane" aria-label="Texto">
+        <div class="pane-bar">
+          <div class="view-switch" role="tablist" aria-label="Modo de exibição do texto">
+            <button id="tab-edit" type="button" role="tab" aria-selected="true">Editar</button>
+            <button id="tab-script" type="button" role="tab" aria-selected="false">Parágrafos (0)</button>
+          </div>
+          <button id="open-file-button" type="button" class="quiet">Abrir arquivo…</button>
+        </div>
+        <p id="text-notice" class="text-notice" role="alert" hidden></p>
+        <textarea
+          id="source-text"
+          spellcheck="false"
+          aria-label="Texto a converter em áudio"
+          placeholder="Cole aqui o texto que vai virar áudio, ou abra um arquivo .txt. Uma linha em branco separa um parágrafo do outro."
+        ></textarea>
+        <ol id="script-list" class="script" hidden></ol>
+      </section>
+
+      <aside class="side-pane">
+        <form id="output-form" class="output-form">
+          <fieldset class="choice-group">
+            <legend>Gerar</legend>
+            <label><input type="radio" name="mode" value="singleFile" checked /> Um áudio com o texto todo</label>
+            <label><input type="radio" name="mode" value="perParagraph" /> Um arquivo por parágrafo</label>
+          </fieldset>
+
+          <label class="field">
+            <span>Voz</span>
+            <select id="voice-select" name="voice"></select>
+          </label>
+
+          <fieldset id="format-field" class="choice-group inline">
+            <legend>Formato</legend>
+            <label><input type="radio" name="format" value="mp3" checked /> MP3</label>
+            <label><input type="radio" name="format" value="wav" /> WAV</label>
+          </fieldset>
+
+          <div class="field destination">
+            <span>Salvar em</span>
+            <output id="destination-path" data-empty="true"></output>
+            <button id="choose-destination" type="button" class="quiet">Escolher…</button>
+          </div>
+
+          <div class="actions">
+            <button id="generate-button" type="submit" class="primary">Gerar áudio</button>
+            <button id="cancel-button" type="button" hidden>Cancelar geração</button>
+          </div>
+          <p id="job-status" class="job-status" role="status" aria-live="polite"></p>
+        </form>
+
+        <section class="player" aria-labelledby="player-heading">
+          <div class="player-heading">
+            <h2 id="player-heading">Ouvir</h2>
+            <button id="open-audio-button" type="button" class="quiet">Abrir áudio…</button>
+          </div>
+          <p id="player-empty" class="player-empty">
+            Os áudios gerados aparecem aqui. Você também pode abrir um áudio do computador para ouvir em outra velocidade.
+          </p>
+          <audio id="audio-player" controls hidden></audio>
+          <div id="speed-controls" class="speed" hidden>
+            <div class="speed-head">
+              <label for="speed-slider">Velocidade</label>
+              <output id="speed-value" for="speed-slider">1×</output>
+            </div>
+            <input id="speed-slider" type="range" value="1" />
+            <div id="speed-presets" class="speed-presets" role="group" aria-label="Velocidades comuns"></div>
+            <button id="save-speed-button" type="button">Salvar nesta velocidade…</button>
+            <p id="speed-status" class="job-status" role="status" aria-live="polite"></p>
+          </div>
+          <div class="player-actions">
+            <button id="play-all-button" type="button" class="quiet" hidden>Tocar todos em sequência</button>
+            <button id="show-in-folder-button" type="button" class="quiet" hidden>Mostrar na pasta</button>
+          </div>
+          <ul id="track-list" class="track-list"></ul>
+        </section>
+      </aside>
+    </main>
+
+    <dialog id="api-key-dialog" aria-labelledby="api-key-title">
+      <form id="api-key-form">
+        <h2 id="api-key-title">Chave da OpenAI</h2>
+        <p>
+          A chave fica guardada só neste computador, criptografada com a sua conta do Windows. Gere uma em
+          platform.openai.com/api-keys.
+        </p>
+        <label class="field">
+          <span>Chave</span>
+          <input id="api-key-input" type="password" autocomplete="off" spellcheck="false" placeholder="sk-..." required />
+        </label>
+        <p id="api-key-error" class="dialog-error" role="alert"></p>
+        <div class="dialog-actions">
+          <button id="api-key-clear" type="button" class="quiet danger" hidden>Remover chave salva</button>
+          <button id="api-key-close" type="button">Fechar</button>
+          <button type="submit" class="primary">Salvar chave</button>
+        </div>
+      </form>
+    </dialog>
+  </body>
+</html>

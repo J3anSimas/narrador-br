@@ -1,0 +1,19 @@
+{
+  "appId": "br.com.salineira.texto-em-fala",
+  "productName": "Texto em Fala",
+  "directories": { "output": "release" },
+  "files": ["dist/**/*", "package.json"],
+  "extraMetadata": { "main": "dist/desktop/main/main.js" },
+  "asarUnpack": ["node_modules/ffmpeg-static/**"],
+  "win": {
+    "target": ["nsis", "portable"]
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "artifactName": "${productName} Setup ${version}.${ext}"
+  },
+  "portable": {
+    "artifactName": "${productName} ${version} portable.${ext}"
+  }
+}

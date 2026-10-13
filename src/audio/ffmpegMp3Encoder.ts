@@ -1,5 +1,6 @@
-import { spawn } from "node:child_process";
 import type { Mp3Encoder } from "./mp3Encoder.js";
+import { describeFfmpegSpawnError } from "./ffmpegSpawnError.js";
+import { runProcess, type ProcessResult } from "./runProcess.js";
 
 // WAV pelo stdin, MP3 pelo stdout: nada de arquivo temporário. Bitrate constante (CBR) de
 // propósito: escrevendo em pipe, o ffmpeg não volta ao início para gravar o cabeçalho Xing,
@@ -22,12 +23,6 @@ const WAV_TO_MP3_ARGS = [
   "pipe:1",
 ];
 
-interface ProcessResult {
-  exitCode: number | null;
-  stdout: Buffer;
-  stderr: string;
-}
-
 /**
  * Implementação de `Mp3Encoder` que chama o executável do ffmpeg.
  *
@@ -37,7 +32,7 @@ export class FfmpegMp3Encoder implements Mp3Encoder {
   constructor(private readonly ffmpegPath: string = "ffmpeg") {}
 
   async encodeWavToMp3(wav: Uint8Array): Promise<Uint8Array> {
-    const result = await runProcess(this.ffmpegPath, WAV_TO_MP3_ARGS, wav);
+    const result = await runFfmpeg(this.ffmpegPath, wav);
     if (result.exitCode !== 0) {
       throw new Error(
         `ffmpeg falhou com código ${result.exitCode} (esperado: 0) ao converter WAV de ${wav.length} bytes: ${result.stderr.trim()}`,
@@ -47,28 +42,10 @@ export class FfmpegMp3Encoder implements Mp3Encoder {
   }
 }
 
-function runProcess(command: string, args: readonly string[], input: Uint8Array): Promise<ProcessResult> {
-  return new Promise((resolve, reject) => {
-    const child = spawn(command, args, { stdio: ["pipe", "pipe", "pipe"] });
-    const stdoutChunks: Buffer[] = [];
-    const stderrChunks: Buffer[] = [];
-    child.stdout.on("data", (chunk: Buffer) => stdoutChunks.push(chunk));
-    child.stderr.on("data", (chunk: Buffer) => stderrChunks.push(chunk));
-    child.on("error", (error) => reject(describeSpawnError(error, command)));
-    child.on("close", (exitCode) => {
-      resolve({ exitCode, stdout: Buffer.concat(stdoutChunks), stderr: Buffer.concat(stderrChunks).toString("utf8") });
-    });
-    // Se o ffmpeg morrer antes de ler tudo, a escrita dá EPIPE; o código de saída já relata a falha.
-    child.stdin.on("error", () => undefined);
-    child.stdin.end(input);
-  });
-}
-
-function describeSpawnError(error: Error, command: string): Error {
-  if ("code" in error && error.code === "ENOENT") {
-    return new Error(
-      `ffmpeg não encontrado (procurado: "${command}"; esperado: ffmpeg no PATH, ex.: winget install Gyan.FFmpeg). Use --audio-file com .wav para não depender dele.`,
-    );
+async function runFfmpeg(command: string, wav: Uint8Array): Promise<ProcessResult> {
+  try {
+    return await runProcess(command, WAV_TO_MP3_ARGS, wav);
+  } catch (error) {
+    throw describeFfmpegSpawnError(error, command, " Use --audio-file com .wav para não depender dele.");
   }
-  return new Error(`Não foi possível executar "${command}": ${error.message}`);
 }
