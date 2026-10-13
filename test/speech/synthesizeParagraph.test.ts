@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { BRAZILIAN_NARRATION_INSTRUCTIONS } from "../../src/speech/brazilianNarration.js";
 import { MAX_PARAGRAPH_LENGTH, synthesizeParagraph } from "../../src/speech/synthesizeParagraph.js";
 import { FakeSpeechApi } from "../fakes/FakeSpeechApi.js";
 
@@ -11,7 +12,13 @@ describe("synthesizeParagraph", () => {
   it("envia o parágrafo sem espaços nas pontas e com os padrões", async () => {
     const api = new FakeSpeechApi();
     await synthesizeParagraph("  Olá, mundo.\n", api);
-    expect(api.requests).toEqual([{ text: "Olá, mundo.", model: "gpt-4o-mini-tts", voice: "marin", format: "mp3" }]);
+    expect(api.requests).toEqual([{
+      text: "Olá, mundo.",
+      model: "gpt-4o-mini-tts",
+      voice: "marin",
+      format: "mp3",
+      instructions: BRAZILIAN_NARRATION_INSTRUCTIONS,
+    }]);
   });
 
   it("aplica as opções informadas e ignora as indefinidas", async () => {

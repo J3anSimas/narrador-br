@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { BRAZILIAN_NARRATION_INSTRUCTIONS } from "../../src/speech/brazilianNarration.js";
 import { synthesizeParagraphs } from "../../src/speech/synthesizeParagraphs.js";
 import { FakeAudioFileWriter } from "../fakes/FakeAudioFileWriter.js";
 import { FakeSpeechApi } from "../fakes/FakeSpeechApi.js";
@@ -20,7 +21,13 @@ describe("synthesizeParagraphs", () => {
       { api, writer: new FakeAudioFileWriter() },
       { voice: "cedar", format: "wav" },
     );
-    expect(api.requests).toEqual([{ text: "Um.", model: "gpt-4o-mini-tts", voice: "cedar", format: "wav" }]);
+    expect(api.requests).toEqual([{
+      text: "Um.",
+      model: "gpt-4o-mini-tts",
+      voice: "cedar",
+      format: "wav",
+      instructions: BRAZILIAN_NARRATION_INSTRUCTIONS,
+    }]);
     expect(paths).toEqual([join("saida", "paragrafo-001.wav")]);
   });
 

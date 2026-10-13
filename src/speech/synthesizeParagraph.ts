@@ -1,3 +1,4 @@
+import { BRAZILIAN_NARRATION_INSTRUCTIONS } from "./brazilianNarration.js";
 import type { AudioFormat, SpeechApi, SpeechRequest } from "./speechApi.js";
 
 /** Limite de caracteres do campo `input` em `POST /v1/audio/speech`. */
@@ -15,6 +16,7 @@ export const DEFAULT_SPEECH_OPTIONS = {
   model: "gpt-4o-mini-tts",
   voice: "marin",
   format: "mp3",
+  instructions: BRAZILIAN_NARRATION_INSTRUCTIONS,
 } as const satisfies SpeechOptions;
 
 /**
