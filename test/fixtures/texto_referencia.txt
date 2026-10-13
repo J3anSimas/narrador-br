@@ -1,0 +1,86 @@
+Guia de observabilidade para pequenas equipes de TI
+
+Este texto foi escrito para os testes do narrador-br. Ele imita o formato de um material de aula: títulos numerados, listas, quadros copiados de PDF e frases quebradas no lugar errado.
+
+1. Itens iniciais
+
+Propósito
+
+Observabilidade é a capacidade de entender o que acontece dentro de um sistema
+a partir dos sinais que ele emite. Uma equipe pequena não precisa de um stack
+enorme para começar: logs estruturados, algumas métricas e alertas bem
+escolhidos já mudam o dia a dia.
+
+Objetivos
+
+- reconhecer os três pilares da observabilidade;
+
+- escolher métricas que respondam perguntas do negócio;
+
+- configurar alertas que acordem alguém só quando necessário.
+
+2. Os três pilares
+
+Logs registram eventos isolados, como um deploy concluído ou uma requisição que falhou. Métricas resumem o comportamento ao longo do tempo, como a latência média da API. Traces seguem uma requisição de ponta a ponta, passando pelo frontend, pelo backend e pelo banco de dados.
+
+Na prática, os três se complementam: a métrica avisa que algo mudou, o trace mostra onde e o log explica o porquê.
+
+3. Escolhendo métricas
+
+Uma boa métrica responde uma pergunta clara. Veja alguns exemplos comuns em equipes de TI:
+
+- tempo médio de resposta de um endpoint;
+
+- número de erros em um módulo;
+
+- percentual de deploys revertidos no mês.
+
+Antes de criar um dashboard, vale perguntar quem vai olhar para ele e que decisão ele ajuda a tomar. Métricas sem dono costumam ser esquecidas em poucas semanas, e o painel vira apenas um enfeite na parede da
+
+sala de reuniões.
+
+4. Avaliando riscos
+
+Para priorizar o que monitorar, é útil cruzar a chance de cada falha com o estrago que ela causaria. Veja um exemplo de quadro:
+
+Probabilidade/
+
+Impacto
+
+Alta
+
+Média
+
+Baixa
+
+Falhas com probabilidade alta e impacto alto entram primeiro no plano de monitoramento; as demais podem esperar a próxima revisão.
+
+5. Alertas
+
+Um alerta só é útil se alguém souber o que fazer quando ele dispara. Por isso, todo alerta deveria apontar para um runbook com os primeiros passos de investigação.
+
+Alertas demais geram fadiga: a equipe passa a ignorar as notificações e perde justamente a que importava. Revise os alertas a cada trimestre e remova os que nunca levaram a uma ação.
+
+Verificando o aprendizado
+
+Questão 1
+
+Qual afirmação descreve melhor a função de um trace?
+
+( ) Registrar um evento isolado, como o fim de um deploy.
+
+( ) Seguir uma requisição de ponta a ponta entre os serviços do sistema, mostrando onde o tempo foi
+
+gasto.
+
+( ) Resumir o comportamento do sistema ao longo do tempo.
+
+Considerações finais
+
+Comece pequeno, meça o que importa e ajuste os alertas com base no que a equipe aprende em cada incidente.
+
+Referências
+
+BEYER, B. et al. Site Reliability Engineering: how Google runs production systems. Sebastopol: O'Reilly Media, 2016.
+
+MAJORS, C.; FONG-JONES, L.; MIRANDA, G. Observability engineering. Sebastopol: O'Reilly Media, 2022.

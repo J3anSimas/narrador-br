@@ -9,12 +9,12 @@ class FakeTerminalStdin implements StdinStream {
   async *[Symbol.asyncIterator](): AsyncIterator<string> {}
 }
 
-const fixturePath = fileURLToPath(new URL("../fixtures/teoria_indicadores_desempenho_TI.txt", import.meta.url));
+const fixturePath = fileURLToPath(new URL("../fixtures/texto_referencia.txt", import.meta.url));
 
 describe("NodeTextInputSource", () => {
   it("lê um arquivo UTF-8 do disco", async () => {
     const text = await new NodeTextInputSource(Readable.from([])).readFile(fixturePath);
-    expect(text.startsWith("Teoria sobre indicadores de desempenho de TI")).toBe(true);
+    expect(text.startsWith("Guia de observabilidade para pequenas equipes de TI")).toBe(true);
   });
 
   it("inclui o caminho na mensagem quando o arquivo não existe", async () => {

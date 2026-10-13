@@ -3,8 +3,9 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { splitParagraphs } from "../../src/paragraphs/splitParagraphs.js";
 
-// Cópia de teoria_indicadores_desempenho_TI.txt: arquivo de referência para validação.
-const referencePath = fileURLToPath(new URL("../fixtures/teoria_indicadores_desempenho_TI.txt", import.meta.url));
+// Texto próprio no formato de um material de aula; substituiu um material de curso de terceiros
+// para que o repositório pudesse ser público.
+const referencePath = fileURLToPath(new URL("../fixtures/texto_referencia.txt", import.meta.url));
 const referenceText = readFileSync(referencePath, "utf8");
 const paragraphs = splitParagraphs(referenceText);
 
@@ -12,21 +13,24 @@ function wordsOf(text: string): string[] {
   return text.split(/\s+/).filter((word) => word.length > 0);
 }
 
-describe("arquivo de referência: teoria_indicadores_desempenho_TI.txt", () => {
-  it("gera 568 parágrafos (569 blocos, com uma frase quebrada reunida)", () => {
-    expect(paragraphs).toHaveLength(568);
+describe("arquivo de referência: texto_referencia.txt", () => {
+  it("gera 40 parágrafos (42 blocos, com duas frases quebradas reunidas)", () => {
+    expect(paragraphs).toHaveLength(40);
   });
 
   it("começa pelo título e termina na última referência bibliográfica", () => {
-    expect(paragraphs[0]).toBe("Teoria sobre indicadores de desempenho de TI");
-    expect(paragraphs.at(-1)).toBe("SOMMERVILLE, I. Engenharia de software. 10. ed. São Paulo: Pearson Prentice Hall, 2011.");
+    expect(paragraphs[0]).toBe("Guia de observabilidade para pequenas equipes de TI");
+    expect(paragraphs.at(-1)).toBe(
+      "MAJORS, C.; FONG-JONES, L.; MIRANDA, G. Observability engineering. Sebastopol: O'Reilly Media, 2022.",
+    );
   });
 
-  it("reúne a frase quebrada por linha em branco (linhas 795-797 do original)", () => {
+  it("reúne a frase quebrada por linha em branco", () => {
     expect(paragraphs).toContain(
-      "( ) KPIs que monitoram o desempenho organizacional, considerando as capacidades da empresa para a inovação.",
+      "( ) Seguir uma requisição de ponta a ponta entre os serviços do sistema, mostrando onde o tempo foi gasto.",
     );
-    expect(paragraphs).not.toContain("inovação.");
+    expect(paragraphs).not.toContain("gasto.");
+    expect(paragraphs).not.toContain("sala de reuniões.");
   });
 
   it("mantém itens de lista, títulos e alternativas como parágrafos próprios", () => {

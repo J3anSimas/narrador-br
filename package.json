@@ -1,5 +1,5 @@
 {
-  "name": "text-to-speech",
+  "name": "narrador-br",
   "version": "1.0.0",
   "description": "Separa um texto em parágrafos e o transforma em áudio com a OpenAI (CLI e app desktop).",
   "type": "module",
