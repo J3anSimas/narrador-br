@@ -8,6 +8,9 @@ export const OPENAI_SPEECH_MAX_INPUT_LENGTH = 4096;
 /** Formato do `response_format: "pcm"` da OpenAI: 24 kHz, 16 bits com sinal, little-endian, mono. */
 export const OPENAI_PCM_FORMAT: PcmFormat = { sampleRate: 24_000, channels: 1, bitsPerSample: 16 };
 
+// Dois em paralelo reduz o tempo de textos longos sem esbarrar com frequência no rate limit.
+export const OPENAI_SPEECH_MAX_CONCURRENT_REQUESTS = 2;
+
 export const DEFAULT_SPEECH_MODEL = "gpt-4o-mini-tts";
 
 // "marin" e "cedar" são as vozes de melhor qualidade segundo o guia de TTS da OpenAI.
@@ -26,6 +29,7 @@ export interface OpenAiSpeechEndpoint {
 export class OpenAiSpeechApi implements SpeechApi {
   readonly maxInputLength = OPENAI_SPEECH_MAX_INPUT_LENGTH;
   readonly pcmFormat = OPENAI_PCM_FORMAT;
+  readonly maxConcurrentRequests = OPENAI_SPEECH_MAX_CONCURRENT_REQUESTS;
 
   constructor(
     private readonly endpoint: OpenAiSpeechEndpoint,

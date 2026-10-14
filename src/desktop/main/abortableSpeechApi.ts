@@ -9,8 +9,8 @@ export class JobCancelledError extends Error {
 }
 
 /**
- * `SpeechApi` que para de aceitar pedidos depois que o sinal é abortado. O pedido em
- * andamento termina normalmente: o áudio dele já vai para o cache e não é pago de novo.
+ * `SpeechApi` que para de aceitar pedidos depois que o sinal é abortado. Os pedidos em
+ * andamento terminam normalmente: o áudio deles já vai para o cache e não é pago de novo.
  *
  * @example new AbortableSpeechApi(api, abortController.signal)
  */
@@ -30,6 +30,10 @@ export class AbortableSpeechApi implements SpeechApi {
 
   get pcmFormat(): PcmFormat {
     return this.inner.pcmFormat;
+  }
+
+  get maxConcurrentRequests(): number | undefined {
+    return this.inner.maxConcurrentRequests;
   }
 
   async createSpeech(request: SpeechRequest): Promise<Uint8Array> {

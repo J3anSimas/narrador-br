@@ -23,5 +23,7 @@ export interface SpeechApi {
   readonly maxInputLength: number;
   /** Formato das amostras devolvidas com `format: "pcm"`, para emendá-las num WAV. */
   readonly pcmFormat: PcmFormat;
+  /** Quantos pedidos podem estar em andamento ao mesmo tempo (inteiro ≥ 1); sem ele, um por vez. */
+  readonly maxConcurrentRequests?: number;
   createSpeech(request: SpeechRequest): Promise<Uint8Array>;
 }

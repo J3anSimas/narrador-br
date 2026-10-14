@@ -41,4 +41,9 @@ describe("OpenAiSpeechApi", () => {
     const audio = await new OpenAiSpeechApi(endpoint).createSpeech({ text: "Olá.", format: "mp3" });
     expect([...audio]).toEqual([4, 5, 6]);
   });
+
+  it("permite dois pedidos de fala em paralelo", () => {
+    const api = new OpenAiSpeechApi(new FakeOpenAiSpeechEndpoint(new Uint8Array()));
+    expect(api.maxConcurrentRequests).toBe(2);
+  });
 });

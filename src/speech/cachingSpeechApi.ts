@@ -40,6 +40,10 @@ export class CachingSpeechApi implements SpeechApi {
     return this.inner.pcmFormat;
   }
 
+  get maxConcurrentRequests(): number | undefined {
+    return this.inner.maxConcurrentRequests;
+  }
+
   /** Quantos pedidos foram atendidos pelo cache (trabalho reaproveitado de execuções anteriores). */
   get cacheHits(): number {
     return this.hits;
