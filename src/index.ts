@@ -1,7 +1,20 @@
 export { splitParagraphs } from "./paragraphs/splitParagraphs.js";
+export { fitParagraphsToLimit } from "./paragraphs/fitParagraphsToLimit.js";
+export { fitParagraphsWithRewriter, type RewriteDependencies, type RewriteEvent } from "./rewrite/fitParagraphsWithRewriter.js";
+export { type TextRewriter } from "./rewrite/textRewriter.js";
+export {
+  OpenAiTextRewriter,
+  DEFAULT_REWRITE_MODEL,
+  UnexpectedRewriteResponseError,
+  type OpenAiResponsesEndpoint,
+} from "./rewrite/openAiTextRewriter.js";
+export { createOpenAiTextRewriter } from "./rewrite/createOpenAiTextRewriter.js";
 export { formatParagraphs, type OutputFormat } from "./output/formatParagraphs.js";
 export { readInputText, type InputRequest, type TextInputSource } from "./input/textInputSource.js";
 export { NodeTextInputSource } from "./input/nodeTextInputSource.js";
+export { extractPdfLines } from "./pdf/extractPdfLines.js";
+export { pdfPagesToText } from "./pdf/pdfPagesToText.js";
+export { type PdfPage, type PdfTextLine } from "./pdf/pdfTextLine.js";
 export { synthesizeParagraph, MAX_PARAGRAPH_LENGTH, type SpeechOptions } from "./speech/synthesizeParagraph.js";
 export { AUDIO_FORMATS, type AudioFormat, type SpeechApi, type SpeechRequest } from "./speech/speechApi.js";
 export { OpenAiSpeechApi, type OpenAiSpeechEndpoint } from "./speech/openAiSpeechApi.js";

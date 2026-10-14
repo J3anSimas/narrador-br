@@ -26,6 +26,15 @@ describe("parseCliArgs", () => {
     expect(() => parseCliArgs(["-f", "aula.txt", "texto"])).toThrow(/"aula\.txt".*"texto"/);
   });
 
+  it("aceita --rewrite-model e só inclui o campo quando informado", () => {
+    expect(parseCliArgs(["--rewrite-model", "gpt-teste"]).rewriteModel).toBe("gpt-teste");
+    expect(parseCliArgs([])).not.toHaveProperty("rewriteModel");
+  });
+
+  it("rejeita --rewrite-model vazio", () => {
+    expect(() => parseCliArgs(["--rewrite-model", " "])).toThrow(/--rewrite-model vazio/);
+  });
+
   it("rejeita formato desconhecido, citando o valor e os aceitos", () => {
     expect(() => parseCliArgs(["--format", "xml"])).toThrow(/"xml".*text \| json/);
   });

@@ -1,7 +1,10 @@
 import type { TextInputSource } from "../../src/input/textInputSource.js";
 
-/** Fonte de texto em memória: simula arquivos e stdin sem tocar no disco. */
+/** Fonte de texto em memória: simula arquivos (inclusive o texto já extraído de PDFs) e stdin sem tocar no disco. */
 export class FakeTextInputSource implements TextInputSource {
+  /** Caminhos pedidos via `readPdf`, para conferir que o PDF não foi lido como texto. */
+  readonly pdfPathsRead: string[] = [];
+
   constructor(
     private readonly filesByPath: ReadonlyMap<string, string> = new Map(),
     private readonly stdinText: string = "",
@@ -10,6 +13,13 @@ export class FakeTextInputSource implements TextInputSource {
   async readFile(path: string): Promise<string> {
     const content = this.filesByPath.get(path);
     if (content === undefined) throw new Error(`Arquivo falso não encontrado: "${path}"`);
+    return content;
+  }
+
+  async readPdf(path: string): Promise<string> {
+    this.pdfPathsRead.push(path);
+    const content = this.filesByPath.get(path);
+    if (content === undefined) throw new Error(`PDF falso não encontrado: "${path}"`);
     return content;
   }
 

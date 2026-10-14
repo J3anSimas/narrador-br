@@ -1,7 +1,7 @@
 {
   "name": "text-to-speech",
   "version": "1.0.0",
-  "description": "Separa um texto (ou arquivo de texto) em parágrafos.",
+  "description": "Separa um texto, arquivo de texto ou PDF em parágrafos e os narra com a OpenAI.",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -22,6 +22,7 @@
     "vitest": "^3.2.7"
   },
   "dependencies": {
-    "openai": "^7.30.0"
+    "openai": "^7.30.0",
+    "pdfjs-dist": "6.3.289"
   }
 }
