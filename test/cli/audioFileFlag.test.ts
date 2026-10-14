@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { parseCliArgs } from "../../src/cli/parseCliArgs.js";
 import { runCli } from "../../src/cli/runCli.js";
+import { fakeAiProvider } from "../fakes/FakeAiProvider.js";
 import { FakeAudioFileWriter } from "../fakes/FakeAudioFileWriter.js";
 import { FakeSpeechApi } from "../fakes/FakeSpeechApi.js";
 import { FakeTextInputSource } from "../fakes/FakeTextInputSource.js";
@@ -36,7 +37,8 @@ describe("runCli com --audio-file", () => {
       source: new FakeTextInputSource(new Map([["aula.txt", "Um\nlinha.\n\nDois."]])),
       stdout,
       stderr: new FakeTextSink(),
-      audio: { createSpeechApi: () => api, writer },
+      ai: fakeAiProvider({ createSpeechApi: () => api }),
+      audio: { writer },
     };
     expect(await runCli(["-f", "aula.txt", "--audio-file", "aula.wav"], deps)).toBe(0);
     expect(api.requests.map((request) => [request.text, request.format])).toEqual([

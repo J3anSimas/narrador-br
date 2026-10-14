@@ -1,8 +1,8 @@
 import { join } from "node:path";
 import type { AudioFileWriter } from "../output/audioFileWriter.js";
-import type { SpeechApi } from "./speechApi.js";
+import type { SpeechApi } from "../ports/speechApi.js";
 import { synthesizeInOrder } from "./synthesizeInOrder.js";
-import { DEFAULT_SPEECH_OPTIONS, type SpeechOptions } from "./synthesizeParagraph.js";
+import { DEFAULT_AUDIO_FORMAT, type SpeechOptions } from "./synthesizeParagraph.js";
 
 export interface AudioBatchDependencies {
   api: SpeechApi;
@@ -25,7 +25,7 @@ export async function synthesizeParagraphs(
   deps: AudioBatchDependencies,
   options: SpeechOptions = {},
 ): Promise<string[]> {
-  const extension = options.format ?? DEFAULT_SPEECH_OPTIONS.format;
+  const extension = options.format ?? DEFAULT_AUDIO_FORMAT;
   const paths: string[] = [];
   for await (const audio of synthesizeInOrder(paragraphs, deps.api, options)) {
     const path = join(outputDir, audioFileName(paths.length + 1, extension));

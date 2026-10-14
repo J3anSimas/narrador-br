@@ -1,7 +1,8 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { runCli, type CliDependencies } from "../../src/cli/runCli.js";
-import type { SpeechApi } from "../../src/speech/speechApi.js";
+import type { SpeechApi } from "../../src/ports/speechApi.js";
+import { fakeAiProvider } from "../fakes/FakeAiProvider.js";
 import { FakeAudioFileWriter } from "../fakes/FakeAudioFileWriter.js";
 import { FakeSpeechApi } from "../fakes/FakeSpeechApi.js";
 import { FakeTextInputSource } from "../fakes/FakeTextInputSource.js";
@@ -13,7 +14,7 @@ interface AudioTestSetup {
   deps: CliDependencies & { stdout: FakeTextSink; stderr: FakeTextSink; audio: { writer: FakeAudioFileWriter } };
 }
 
-/** Fábrica que falha como a real falharia sem OPENAI_API_KEY. */
+/** Fábrica que falha como a real falharia sem credencial. */
 function failingSpeechApiFactory(message: string): () => SpeechApi {
   return () => {
     throw new Error(message);
@@ -30,7 +31,8 @@ function createAudioDependencies(text: string): AudioTestSetup {
       source: new FakeTextInputSource(new Map([["aula.txt", text]])),
       stdout: new FakeTextSink(),
       stderr: new FakeTextSink(),
-      audio: { createSpeechApi: () => api, writer },
+      ai: fakeAiProvider({ createSpeechApi: () => api }),
+      audio: { writer },
     },
   };
 }
@@ -51,18 +53,15 @@ describe("runCli com --audio", () => {
 
   it("não cria a API no modo texto", async () => {
     const { deps } = createAudioDependencies("Um.");
-    const failingDeps = { ...deps, audio: { ...deps.audio, createSpeechApi: failingSpeechApiFactory("sem chave") } };
+    const failingDeps = { ...deps, ai: fakeAiProvider({ createSpeechApi: failingSpeechApiFactory("sem chave") }) };
     expect(await runCli(["-f", "aula.txt"], failingDeps)).toBe(0);
   });
 
   it("retorna 1 com a mensagem da fábrica quando a API não pode ser criada", async () => {
     const { deps } = createAudioDependencies("Um.");
-    const failingDeps = {
-      ...deps,
-      audio: { ...deps.audio, createSpeechApi: failingSpeechApiFactory("OPENAI_API_KEY ausente") },
-    };
+    const failingDeps = { ...deps, ai: fakeAiProvider({ createSpeechApi: failingSpeechApiFactory("chave ausente") }) };
     expect(await runCli(["-f", "aula.txt", "--audio", "saida"], failingDeps)).toBe(1);
-    expect(deps.stderr.written).toMatch(/^Erro: OPENAI_API_KEY ausente/);
+    expect(deps.stderr.written).toMatch(/^Erro: chave ausente/);
   });
 
   it("retorna 1 quando a CLI foi montada sem suporte a áudio", async () => {

@@ -1,12 +1,11 @@
 import type { ResponseCreateParamsNonStreaming } from "openai/resources/responses/responses";
 import { describe, expect, it } from "vitest";
-import { createOpenAiTextRewriter } from "../../src/rewrite/createOpenAiTextRewriter.js";
 import {
   DEFAULT_REWRITE_MODEL,
   OpenAiTextRewriter,
-  UnexpectedRewriteResponseError,
   type OpenAiResponsesEndpoint,
-} from "../../src/rewrite/openAiTextRewriter.js";
+} from "../../../src/adapters/openai/openAiTextRewriter.js";
+import { UnexpectedRewriteResponseError } from "../../../src/ports/textRewriter.js";
 
 /** Substitui `OpenAI#responses`: guarda os corpos enviados e responde com um texto fixo. */
 class FakeResponsesEndpoint implements OpenAiResponsesEndpoint {
@@ -47,14 +46,4 @@ describe("OpenAiTextRewriter", () => {
       await expect(rewriter.fitToLength("texto", 100)).rejects.toThrow(UnexpectedRewriteResponseError);
     },
   );
-});
-
-describe("createOpenAiTextRewriter", () => {
-  it("monta a LLM quando a chave existe, sem chamar a rede", () => {
-    expect(createOpenAiTextRewriter({ OPENAI_API_KEY: "sk-teste" }, "m").model).toBe("m");
-  });
-
-  it("aponta para o .env quando a chave falta", () => {
-    expect(() => createOpenAiTextRewriter({})).toThrow(/OPENAI_API_KEY.*\.env/);
-  });
 });

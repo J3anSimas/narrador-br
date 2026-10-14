@@ -20,7 +20,7 @@ describe("synthesizeParagraphs", () => {
       { api, writer: new FakeAudioFileWriter() },
       { voice: "cedar", format: "wav" },
     );
-    expect(api.requests).toEqual([{ text: "Um.", model: "gpt-4o-mini-tts", voice: "cedar", format: "wav" }]);
+    expect(api.requests).toEqual([{ text: "Um.", voice: "cedar", format: "wav" }]);
     expect(paths).toEqual([join("saida", "paragrafo-001.wav")]);
   });
 

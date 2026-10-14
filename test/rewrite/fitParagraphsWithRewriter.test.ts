@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { fitParagraphsWithRewriter, type RewriteEvent } from "../../src/rewrite/fitParagraphsWithRewriter.js";
-import { UnexpectedRewriteResponseError } from "../../src/rewrite/openAiTextRewriter.js";
+import { UnexpectedRewriteResponseError } from "../../src/ports/textRewriter.js";
 import { FakeTextRewriter, type FakeRewriteResponse } from "../fakes/FakeTextRewriter.js";
 
 const LIMIT = 40;

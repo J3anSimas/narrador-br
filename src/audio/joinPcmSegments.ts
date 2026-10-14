@@ -4,7 +4,7 @@ import { createPcmSilence, type PcmFormat } from "./wav.js";
  * Concatena trechos PCM intercalando um silêncio entre eles (não antes do
  * primeiro nem depois do último).
  *
- * @example joinPcmSegments([pcmParagrafo1, pcmParagrafo2], 500, OPENAI_PCM_FORMAT)
+ * @example joinPcmSegments([pcmParagrafo1, pcmParagrafo2], 500, api.pcmFormat)
  */
 export function joinPcmSegments(segments: readonly Uint8Array[], pauseMs: number, format: PcmFormat): Uint8Array {
   segments.forEach((segment, index) => assertWholeFrames(segment, index, format));

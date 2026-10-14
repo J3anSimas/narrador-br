@@ -1,8 +1,8 @@
 import type { Mp3Encoder } from "../audio/mp3Encoder.js";
 import { singleAudioFormatFromPath } from "../audio/singleAudioFormat.js";
 import type { AudioFileWriter } from "../output/audioFileWriter.js";
+import type { SpeechApi } from "../ports/speechApi.js";
 import { CachingSpeechApi } from "../speech/cachingSpeechApi.js";
-import type { SpeechApi } from "../speech/speechApi.js";
 import type { SpeechAudioCache } from "../speech/speechAudioCache.js";
 import { synthesizeParagraphs } from "../speech/synthesizeParagraphs.js";
 import { synthesizeParagraphsToWav } from "../speech/synthesizeParagraphsToWav.js";
@@ -11,15 +11,15 @@ import type { TextSink } from "./runCli.js";
 
 /** Dependências só usadas com --audio / --audio-file. */
 export interface AudioCliDependencies {
-  // Fábrica em vez de instância: o cliente da OpenAI exige a chave ao ser criado,
-  // e o modo texto precisa funcionar sem ela.
-  createSpeechApi: () => SpeechApi;
   writer: AudioFileWriter;
   /** Só usado com --audio-file *.mp3; sem ele, só WAV funciona. */
   mp3Encoder?: Mp3Encoder;
   /** Cria o cache de progresso de --audio-file; sem ele, uma queda perde tudo o que já foi sintetizado. */
   createSpeechCache?: (directory: string) => SpeechAudioCache;
 }
+
+/** As dependências de áudio mais a API de fala, criada só quando há áudio a gerar. */
+export type AudioOutputDependencies = AudioCliDependencies & { api: SpeechApi };
 
 /** API a usar na síntese e o que fazer quando o áudio final estiver salvo. */
 interface SynthesisProgress {
@@ -35,13 +35,13 @@ interface SynthesisProgress {
 export async function writeParagraphsAsAudioFiles(
   paragraphs: readonly string[],
   request: AudioOutputRequest,
-  audio: AudioCliDependencies,
+  audio: AudioOutputDependencies,
   stdout: TextSink,
 ): Promise<void> {
   const onAudioWritten = (path: string, position: number, total: number): void => {
     stdout.write(`[${position}/${total}] ${path}\n`);
   };
-  const batchDeps = { api: audio.createSpeechApi(), writer: audio.writer, onAudioWritten };
+  const batchDeps = { api: audio.api, writer: audio.writer, onAudioWritten };
   await synthesizeParagraphs(paragraphs, request.outputDir, batchDeps, { voice: request.voice });
 }
 
@@ -53,7 +53,7 @@ export async function writeParagraphsAsAudioFiles(
 export async function writeParagraphsAsSingleAudio(
   paragraphs: readonly string[],
   request: AudioFileRequest,
-  audio: AudioCliDependencies,
+  audio: AudioOutputDependencies,
   stdout: TextSink,
 ): Promise<void> {
   const onParagraphSynthesized = (position: number, total: number): void => {
@@ -68,8 +68,8 @@ export async function writeParagraphsAsSingleAudio(
   stdout.write(`Áudio salvo em ${request.outputPath}\n`);
 }
 
-function openSynthesisProgress(outputPath: string, audio: AudioCliDependencies, stdout: TextSink): SynthesisProgress {
-  const api = audio.createSpeechApi();
+function openSynthesisProgress(outputPath: string, audio: AudioOutputDependencies, stdout: TextSink): SynthesisProgress {
+  const { api } = audio;
   if (audio.createSpeechCache === undefined) return { api, finish: async () => undefined };
   const directory = `${outputPath}.partes`;
   const cache = audio.createSpeechCache(directory);

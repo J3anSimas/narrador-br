@@ -4,15 +4,12 @@ export interface PcmFormat {
   bitsPerSample: number;
 }
 
-/** Formato do `response_format: "pcm"` da OpenAI: 24 kHz, 16 bits com sinal, little-endian, mono. */
-export const OPENAI_PCM_FORMAT: PcmFormat = { sampleRate: 24_000, channels: 1, bitsPerSample: 16 };
-
 const WAV_HEADER_SIZE = 44;
 
 /**
  * Envolve amostras PCM cruas num arquivo WAV (cabeçalho RIFF canônico de 44 bytes).
  *
- * @example encodeWav(pcmBytes, OPENAI_PCM_FORMAT) // bytes prontos para gravar em .wav
+ * @example encodeWav(pcmBytes, api.pcmFormat) // bytes prontos para gravar em .wav
  */
 export function encodeWav(pcm: Uint8Array, format: PcmFormat): Uint8Array {
   const wav = new Uint8Array(WAV_HEADER_SIZE + pcm.length);
@@ -45,7 +42,7 @@ function writeAscii(view: DataView, offset: number, text: string): void {
 /**
  * Gera silêncio PCM (amostras zeradas) com a duração pedida.
  *
- * @example createPcmSilence(500, OPENAI_PCM_FORMAT).length // 24000 bytes
+ * @example createPcmSilence(500, { sampleRate: 24_000, channels: 1, bitsPerSample: 16 }).length // 24000 bytes
  */
 export function createPcmSilence(durationMs: number, format: PcmFormat): Uint8Array {
   const blockAlign = format.channels * (format.bitsPerSample / 8);

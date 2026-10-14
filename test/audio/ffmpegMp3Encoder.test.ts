@@ -1,7 +1,9 @@
 import { spawnSync } from "node:child_process";
 import { describe, expect, it } from "vitest";
 import { FfmpegMp3Encoder } from "../../src/audio/ffmpegMp3Encoder.js";
-import { createPcmSilence, encodeWav, OPENAI_PCM_FORMAT } from "../../src/audio/wav.js";
+import { createPcmSilence, encodeWav, type PcmFormat } from "../../src/audio/wav.js";
+
+const PCM_FORMAT: PcmFormat = { sampleRate: 24_000, channels: 1, bitsPerSample: 16 };
 
 // Teste de integração com o executável real; pulado em máquinas sem ffmpeg.
 const hasFfmpeg = spawnSync("ffmpeg", ["-version"]).error === undefined;
@@ -14,7 +16,7 @@ function isMp3Start(bytes: Uint8Array): boolean {
 
 describe("FfmpegMp3Encoder", () => {
   it.skipIf(!hasFfmpeg)("converte um WAV em MP3", async () => {
-    const wav = encodeWav(createPcmSilence(300, OPENAI_PCM_FORMAT), OPENAI_PCM_FORMAT);
+    const wav = encodeWav(createPcmSilence(300, PCM_FORMAT), PCM_FORMAT);
     const mp3 = await new FfmpegMp3Encoder().encodeWavToMp3(wav);
     expect(mp3.length).toBeGreaterThan(0);
     expect(isMp3Start(mp3)).toBe(true);
@@ -22,7 +24,7 @@ describe("FfmpegMp3Encoder", () => {
 
   // Regressão: em VBR via pipe o MP3 saía sem cabeçalho Xing e os players erravam a duração.
   it.skipIf(!hasFfmpeg)("usa bitrate constante, para a duração sair certa sem cabeçalho Xing", async () => {
-    const twoSeconds = encodeWav(createPcmSilence(2_000, OPENAI_PCM_FORMAT), OPENAI_PCM_FORMAT);
+    const twoSeconds = encodeWav(createPcmSilence(2_000, PCM_FORMAT), PCM_FORMAT);
     const mp3 = await new FfmpegMp3Encoder().encodeWavToMp3(twoSeconds);
     const bytesPerSecondAt64kbps = 8_000;
     expect(mp3.length / bytesPerSecondAt64kbps).toBeCloseTo(2, 0);

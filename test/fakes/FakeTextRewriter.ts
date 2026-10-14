@@ -1,4 +1,4 @@
-import type { TextRewriter } from "../../src/rewrite/textRewriter.js";
+import type { TextRewriter } from "../../src/ports/textRewriter.js";
 
 /** Resposta programada: os parágrafos devolvidos, ou um erro a lançar. */
 export type FakeRewriteResponse = readonly string[] | Error;

@@ -1,4 +1,4 @@
-import type { SpeechApi } from "./speechApi.js";
+import type { SpeechApi } from "../ports/speechApi.js";
 import { assertSpeakableText, synthesizeParagraph, type SpeechOptions } from "./synthesizeParagraph.js";
 
 /**
@@ -12,7 +12,7 @@ export async function* synthesizeInOrder(
   api: SpeechApi,
   options: SpeechOptions = {},
 ): AsyncGenerator<Uint8Array> {
-  paragraphs.forEach((paragraph) => assertSpeakableText(paragraph.trim()));
+  paragraphs.forEach((paragraph) => assertSpeakableText(paragraph.trim(), api.maxInputLength));
   // Sequencial de propósito: evita estourar o rate limit da API e mantém a ordem do progresso.
   for (const paragraph of paragraphs) {
     yield await synthesizeParagraph(paragraph, api, options);

@@ -2,8 +2,7 @@ import { parseArgs } from "node:util";
 import { SINGLE_AUDIO_FORMATS, singleAudioFormatFromPath } from "../audio/singleAudioFormat.js";
 import type { InputRequest } from "../input/textInputSource.js";
 import { OUTPUT_FORMATS, type OutputFormat } from "../output/formatParagraphs.js";
-import { DEFAULT_REWRITE_MODEL } from "../rewrite/openAiTextRewriter.js";
-import { MAX_PARAGRAPH_LENGTH } from "../speech/synthesizeParagraph.js";
+import type { AiProvider } from "../ports/aiProvider.js";
 
 /** Pedido de gerar um arquivo de áudio por parágrafo em vez de imprimir os parágrafos. */
 export interface AudioOutputRequest {
@@ -27,11 +26,26 @@ export interface CliOptions {
   rewriteModel?: string;
 }
 
-export const HELP_TEXT = `Uso: paragrafos [opções] [texto]
+/**
+ * Texto de ajuda, com os limites e padrões do provedor de IA configurado.
+ *
+ * @example helpText(createOpenAiProvider(process.env))
+ */
+export function helpText(ai: AiProvider): string {
+  const { name, setupHint, speech, rewrite } = ai;
+  const longParagraphs =
+    rewrite === undefined
+      ? "são divididos nos fins de frase"
+      : `são condensados e/ou\nquebrados em vários por uma LLM da ${name} (requer ${setupHint})`;
+  const rewriteModelOption =
+    rewrite === undefined
+      ? ""
+      : `  --rewrite-model <nome> modelo da ${name} que adapta parágrafos longos (padrão: ${rewrite.defaultModel})\n`;
+  return `Uso: paragrafos [opções] [texto]
 
 Separa um texto (ou PDF) em parágrafos e, opcionalmente, os transforma em áudio.
-Parágrafos com mais de ${MAX_PARAGRAPH_LENGTH} caracteres (limite da API de fala) são condensados e/ou
-quebrados em vários por uma LLM da OpenAI (requer OPENAI_API_KEY no .env); os demais não são alterados.
+Parágrafos com mais de ${speech.maxInputLength} caracteres (limite da API de fala) ${longParagraphs};
+os demais não são alterados.
 
 Entrada (escolha uma):
   -f, --file <caminho>   lê um PDF (.pdf, extraindo o texto) ou um arquivo de texto UTF-8
@@ -41,13 +55,13 @@ Entrada (escolha uma):
 Opções:
   --format <text|json>   formato de saída (padrão: text)
   --audio-file <x.mp3|x.wav>
-                         gera um único áudio com todos os parágrafos (requer OPENAI_API_KEY no .env;
+                         gera um único áudio com todos os parágrafos (requer ${setupHint};
                          .mp3 também requer ffmpeg no PATH)
-  --audio <pasta>        gera paragrafo-001.mp3, paragrafo-002.mp3... na pasta (requer OPENAI_API_KEY no .env)
-  --voice <nome>         voz da OpenAI usada com --audio-file ou --audio (padrão: marin)
-  --rewrite-model <nome> modelo da OpenAI que adapta parágrafos longos (padrão: ${DEFAULT_REWRITE_MODEL})
-  -h, --help             mostra esta ajuda
+  --audio <pasta>        gera paragrafo-001.mp3, paragrafo-002.mp3... na pasta (requer ${setupHint})
+  --voice <nome>         voz da ${name} usada com --audio-file ou --audio (padrão: ${speech.defaultVoice})
+${rewriteModelOption}  -h, --help             mostra esta ajuda
 `;
+}
 
 const CLI_OPTION_SPEC = {
   file: { type: "string", short: "f" },
@@ -89,7 +103,7 @@ function toInputRequest(filePath: string | undefined, positionals: readonly stri
 function toRewriteModel(rawModel: string | undefined): Pick<CliOptions, "rewriteModel"> {
   if (rawModel === undefined) return {};
   if (rawModel.trim().length === 0) {
-    throw new Error(`--rewrite-model vazio (recebido: "${rawModel}"; esperado: nome de modelo, ex.: ${DEFAULT_REWRITE_MODEL}).`);
+    throw new Error(`--rewrite-model vazio (recebido: "${rawModel}"; esperado: nome de modelo).`);
   }
   return { rewriteModel: rawModel.trim() };
 }

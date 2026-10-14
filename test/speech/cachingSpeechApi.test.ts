@@ -1,25 +1,26 @@
 import { describe, expect, it } from "vitest";
 import { CachingSpeechApi, speechCacheKey } from "../../src/speech/cachingSpeechApi.js";
-import type { SpeechRequest } from "../../src/speech/speechApi.js";
+import type { SpeechRequest } from "../../src/ports/speechApi.js";
 import { FakeSpeechAudioCache } from "../fakes/FakeSpeechAudioCache.js";
 import { FakeSpeechApi } from "../fakes/FakeSpeechApi.js";
 
-const request: SpeechRequest = { text: "Olá.", model: "gpt-4o-mini-tts", voice: "marin", format: "pcm" };
+const MODEL = "gpt-4o-mini-tts";
+const request: SpeechRequest = { text: "Olá.", voice: "marin", format: "pcm" };
 
 describe("speechCacheKey", () => {
   it("é estável para o mesmo pedido", () => {
-    expect(speechCacheKey({ ...request })).toBe(speechCacheKey(request));
+    expect(speechCacheKey(MODEL, { ...request })).toBe(speechCacheKey(MODEL, request));
   });
 
   it("muda quando texto, voz, modelo, formato ou instruções mudam", () => {
-    const variants: SpeechRequest[] = [
-      { ...request, text: "Olá!" },
-      { ...request, voice: "cedar" },
-      { ...request, model: "tts-1" },
-      { ...request, format: "mp3" },
-      { ...request, instructions: "Fale devagar." },
+    const variants: [string, SpeechRequest][] = [
+      [MODEL, { ...request, text: "Olá!" }],
+      [MODEL, { ...request, voice: "cedar" }],
+      ["tts-1", request],
+      [MODEL, { ...request, format: "mp3" }],
+      [MODEL, { ...request, instructions: "Fale devagar." }],
     ];
-    const keys = new Set([request, ...variants].map(speechCacheKey));
+    const keys = new Set([[MODEL, request] as const, ...variants].map(([model, req]) => speechCacheKey(model, req)));
     expect(keys.size).toBe(variants.length + 1);
   });
 });
@@ -31,17 +32,23 @@ describe("CachingSpeechApi", () => {
     const api = new CachingSpeechApi(inner, cache);
     expect([...(await api.createSpeech(request))]).toEqual([4, 2]);
     expect(inner.requests).toHaveLength(1);
-    expect(cache.audioByKey.get(speechCacheKey(request))).toEqual(new Uint8Array([4, 2]));
+    expect(cache.audioByKey.get(speechCacheKey(inner.model, request))).toEqual(new Uint8Array([4, 2]));
     expect(api.cacheHits).toBe(0);
   });
 
   it("devolve o áudio salvo sem chamar a API e conta o reaproveitamento", async () => {
     const inner = new FakeSpeechApi();
     const cache = new FakeSpeechAudioCache();
-    cache.audioByKey.set(speechCacheKey(request), new Uint8Array([7]));
+    cache.audioByKey.set(speechCacheKey(inner.model, request), new Uint8Array([7]));
     const api = new CachingSpeechApi(inner, cache);
     expect([...(await api.createSpeech(request))]).toEqual([7]);
     expect(inner.requests).toHaveLength(0);
     expect(api.cacheHits).toBe(1);
+  });
+
+  it("repassa modelo, limite e formato PCM da API envolvida", () => {
+    const inner = new FakeSpeechApi();
+    const api = new CachingSpeechApi(inner, new FakeSpeechAudioCache());
+    expect([api.model, api.maxInputLength, api.pcmFormat]).toEqual([inner.model, inner.maxInputLength, inner.pcmFormat]);
   });
 });

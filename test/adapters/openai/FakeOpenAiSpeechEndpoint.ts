@@ -1,5 +1,5 @@
 import type { SpeechCreateParams } from "openai/resources/audio/speech";
-import type { OpenAiSpeechEndpoint } from "../../src/speech/openAiSpeechApi.js";
+import type { OpenAiSpeechEndpoint } from "../../../src/adapters/openai/openAiSpeechApi.js";
 
 /** Substitui `OpenAI#audio.speech`: guarda os corpos enviados e responde com bytes fixos. */
 export class FakeOpenAiSpeechEndpoint implements OpenAiSpeechEndpoint {

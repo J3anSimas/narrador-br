@@ -1,6 +1,5 @@
 import { fitParagraphsToLimit } from "../paragraphs/fitParagraphsToLimit.js";
-import { UnexpectedRewriteResponseError } from "./openAiTextRewriter.js";
-import type { TextRewriter } from "./textRewriter.js";
+import { UnexpectedRewriteResponseError, type TextRewriter } from "../ports/textRewriter.js";
 
 // A LLM conta caracteres mal: mira abaixo do limite, e cada nova tentativa sobre
 // uma parte que ainda não coube aperta o alvo.

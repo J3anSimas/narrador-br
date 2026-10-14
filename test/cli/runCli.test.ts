@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { runCli, type CliDependencies } from "../../src/cli/runCli.js";
-import { MAX_PARAGRAPH_LENGTH } from "../../src/speech/synthesizeParagraph.js";
+import { fakeAiProvider } from "../fakes/FakeAiProvider.js";
+import { FAKE_MAX_INPUT_LENGTH } from "../fakes/FakeSpeechApi.js";
 import { FakeTextInputSource } from "../fakes/FakeTextInputSource.js";
 import { FakeTextRewriter } from "../fakes/FakeTextRewriter.js";
 import { FakeTextSink } from "../fakes/FakeTextSink.js";
 
 function createDependencies(source: FakeTextInputSource): CliDependencies & { stdout: FakeTextSink; stderr: FakeTextSink } {
-  return { source, stdout: new FakeTextSink(), stderr: new FakeTextSink() };
+  return { source, stdout: new FakeTextSink(), stderr: new FakeTextSink(), ai: fakeAiProvider() };
 }
 
 describe("runCli", () => {
@@ -37,10 +38,12 @@ describe("runCli", () => {
     const models: (string | undefined)[] = [];
     const deps = {
       ...createDependencies(new FakeTextInputSource(new Map([["aula.txt", `Curto.\n\n${longParagraph}`]]))),
-      createTextRewriter: (model: string | undefined) => {
-        models.push(model);
-        return rewriter;
-      },
+      ai: fakeAiProvider({
+        createTextRewriter: (model) => {
+          models.push(model);
+          return rewriter;
+        },
+      }),
     };
     expect(await runCli(["-f", "aula.txt", "--rewrite-model", "gpt-teste"], deps)).toBe(0);
     expect(deps.stdout.written).toBe("Curto.\n\nVersão condensada.\n");
@@ -55,7 +58,7 @@ describe("runCli", () => {
     const longParagraph = "Uma frase de exemplo para encher o parágrafo. ".repeat(100).trim();
     const deps = {
       ...createDependencies(new FakeTextInputSource(new Map(), longParagraph)),
-      createTextRewriter: () => new FakeTextRewriter([["Primeira metade.", "Segunda metade."]]),
+      ai: fakeAiProvider({ createTextRewriter: () => new FakeTextRewriter([["Primeira metade.", "Segunda metade."]]) }),
     };
     expect(await runCli([], deps)).toBe(0);
     expect(deps.stdout.written).toBe("Primeira metade.\n\nSegunda metade.\n");
@@ -67,9 +70,11 @@ describe("runCli", () => {
   it("não cria a LLM quando nenhum parágrafo passa do limite", async () => {
     const deps = {
       ...createDependencies(new FakeTextInputSource(new Map(), "Curto.")),
-      createTextRewriter: (): never => {
-        throw new Error("sem chave");
-      },
+      ai: fakeAiProvider({
+        createTextRewriter: (): never => {
+          throw new Error("sem chave");
+        },
+      }),
     };
     expect(await runCli([], deps)).toBe(0);
     expect(deps.stdout.written).toBe("Curto.\n");
@@ -81,13 +86,32 @@ describe("runCli", () => {
     expect(await runCli(["--format", "json"], deps)).toBe(0);
     const paragraphs: { text: string }[] = JSON.parse(deps.stdout.written);
     expect(paragraphs.length).toBeGreaterThan(1);
-    for (const { text } of paragraphs) expect(text.length).toBeLessThanOrEqual(MAX_PARAGRAPH_LENGTH);
+    for (const { text } of paragraphs) expect(text.length).toBeLessThanOrEqual(FAKE_MAX_INPUT_LENGTH);
   });
 
   it("mostra a ajuda com -h", async () => {
     const deps = createDependencies(new FakeTextInputSource());
     expect(await runCli(["-h"], deps)).toBe(0);
     expect(deps.stdout.written).toMatch(/^Uso: paragrafos/);
+  });
+
+  it("mostra na ajuda os limites e padrões do provedor de IA", async () => {
+    const deps = {
+      ...createDependencies(new FakeTextInputSource()),
+      ai: fakeAiProvider({ createTextRewriter: () => new FakeTextRewriter([]) }),
+    };
+    expect(await runCli(["-h"], deps)).toBe(0);
+    expect(deps.stdout.written).toMatch(`mais de ${FAKE_MAX_INPUT_LENGTH} caracteres`);
+    expect(deps.stdout.written).toMatch("LLM da Provedor Falso (requer FAKE_KEY no .env)");
+    expect(deps.stdout.written).toMatch("(padrão: voz-falsa)");
+    expect(deps.stdout.written).toMatch("--rewrite-model <nome> modelo da Provedor Falso que adapta parágrafos longos (padrão: modelo-falso)");
+  });
+
+  it("sem LLM no provedor, a ajuda omite --rewrite-model", async () => {
+    const deps = createDependencies(new FakeTextInputSource());
+    expect(await runCli(["-h"], deps)).toBe(0);
+    expect(deps.stdout.written).toMatch("são divididos nos fins de frase");
+    expect(deps.stdout.written).not.toMatch("--rewrite-model");
   });
 
   it("retorna 1 e escreve o erro no stderr quando a leitura falha", async () => {

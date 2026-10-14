@@ -1,12 +1,7 @@
 import type { ResponseCreateParamsNonStreaming } from "openai/resources/responses/responses";
-import type { TextRewriter } from "./textRewriter.js";
+import { UnexpectedRewriteResponseError, type TextRewriter } from "../../ports/textRewriter.js";
 
 export const DEFAULT_REWRITE_MODEL = "gpt-5.4-mini";
-
-/** A LLM respondeu, mas fora do formato pedido; vale como tentativa falha, não como erro fatal. */
-export class UnexpectedRewriteResponseError extends Error {
-  override readonly name = "UnexpectedRewriteResponseError";
-}
 
 /** Recorte de `OpenAI#responses` usado aqui; permite trocar o SDK por um fake. */
 export interface OpenAiResponsesEndpoint {
@@ -28,7 +23,7 @@ const PARAGRAPHS_FORMAT = {
 } as const;
 
 /**
- * Implementação de `TextRewriter` sobre a Responses API da OpenAI.
+ * Adaptador da porta `TextRewriter` sobre a Responses API da OpenAI.
  *
  * @example new OpenAiTextRewriter(new OpenAI().responses, "gpt-5.4-mini")
  */
