@@ -1,15 +1,16 @@
 import { createHash } from "node:crypto";
 import type { SpeechAudioCache } from "./speechAudioCache.js";
-import type { SpeechApi, SpeechRequest } from "./speechApi.js";
+import type { PcmFormat } from "../audio/wav.js";
+import type { SpeechApi, SpeechRequest } from "../ports/speechApi.js";
 
 /**
  * Chave do cache: muda se qualquer coisa que altere o áudio mudar (texto, voz, modelo,
  * formato ou instruções), então editar o texto só refaz os parágrafos alterados.
  *
- * @example speechCacheKey({ text: "Olá.", model: "gpt-4o-mini-tts", voice: "marin", format: "pcm" })
+ * @example speechCacheKey("gpt-4o-mini-tts", { text: "Olá.", voice: "marin", format: "pcm" })
  */
-export function speechCacheKey(request: SpeechRequest): string {
-  const identity = [request.text, request.model, request.voice, request.format, request.instructions ?? null];
+export function speechCacheKey(model: string, request: SpeechRequest): string {
+  const identity = [request.text, model, request.voice ?? null, request.format, request.instructions ?? null];
   return createHash("sha256").update(JSON.stringify(identity)).digest("hex");
 }
 
@@ -17,7 +18,7 @@ export function speechCacheKey(request: SpeechRequest): string {
  * `SpeechApi` que consulta o cache antes de chamar a API e grava cada resposta assim
  * que ela chega; uma queda no meio perde no máximo o parágrafo em andamento.
  *
- * @example new CachingSpeechApi(createOpenAiSpeechApi(process.env), new NodeSpeechAudioCache("aula.mp3.partes"))
+ * @example new CachingSpeechApi(ai.speech.create(), new NodeSpeechAudioCache("aula.mp3.partes"))
  */
 export class CachingSpeechApi implements SpeechApi {
   private hits = 0;
@@ -27,13 +28,25 @@ export class CachingSpeechApi implements SpeechApi {
     private readonly cache: SpeechAudioCache,
   ) {}
 
+  get model(): string {
+    return this.inner.model;
+  }
+
+  get maxInputLength(): number {
+    return this.inner.maxInputLength;
+  }
+
+  get pcmFormat(): PcmFormat {
+    return this.inner.pcmFormat;
+  }
+
   /** Quantos pedidos foram atendidos pelo cache (trabalho reaproveitado de execuções anteriores). */
   get cacheHits(): number {
     return this.hits;
   }
 
   async createSpeech(request: SpeechRequest): Promise<Uint8Array> {
-    const key = speechCacheKey(request);
+    const key = speechCacheKey(this.inner.model, request);
     const cached = await this.cache.read(key);
     if (cached !== undefined) {
       this.hits += 1;

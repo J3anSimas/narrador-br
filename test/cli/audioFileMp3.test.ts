@@ -3,6 +3,7 @@ import type { Mp3Encoder } from "../../src/audio/mp3Encoder.js";
 import { parseCliArgs } from "../../src/cli/parseCliArgs.js";
 import { runCli } from "../../src/cli/runCli.js";
 import { FailingMp3Encoder } from "../fakes/FailingMp3Encoder.js";
+import { fakeAiProvider } from "../fakes/FakeAiProvider.js";
 import { FakeAudioFileWriter } from "../fakes/FakeAudioFileWriter.js";
 import { FakeMp3Encoder } from "../fakes/FakeMp3Encoder.js";
 import { FakeSpeechApi } from "../fakes/FakeSpeechApi.js";
@@ -25,7 +26,8 @@ async function runWithMp3Encoder(argv: readonly string[], mp3Encoder: Mp3Encoder
     source: new FakeTextInputSource(new Map([["aula.txt", "Um.\n\nDois."]])),
     stdout,
     stderr,
-    audio: { createSpeechApi: () => api, writer, ...(mp3Encoder && { mp3Encoder }) },
+    ai: fakeAiProvider({ createSpeechApi: () => api }),
+    audio: { writer, ...(mp3Encoder && { mp3Encoder }) },
   });
   return { exitCode, writer, stdout, stderr };
 }

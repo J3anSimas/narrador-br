@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { createPcmSilence, encodeWav, OPENAI_PCM_FORMAT } from "../../src/audio/wav.js";
+import { createPcmSilence, encodeWav, type PcmFormat } from "../../src/audio/wav.js";
+
+const PCM_FORMAT: PcmFormat = { sampleRate: 24_000, channels: 1, bitsPerSample: 16 };
 
 function readAscii(bytes: Uint8Array, offset: number, length: number): string {
   return String.fromCharCode(...bytes.subarray(offset, offset + length));
@@ -7,7 +9,7 @@ function readAscii(bytes: Uint8Array, offset: number, length: number): string {
 
 describe("encodeWav", () => {
   it("escreve um cabeçalho RIFF/WAVE coerente com o formato e o tamanho", () => {
-    const wav = encodeWav(new Uint8Array([1, 0, 2, 0]), OPENAI_PCM_FORMAT);
+    const wav = encodeWav(new Uint8Array([1, 0, 2, 0]), PCM_FORMAT);
     const view = new DataView(wav.buffer);
     expect([readAscii(wav, 0, 4), readAscii(wav, 8, 4), readAscii(wav, 12, 4), readAscii(wav, 36, 4)]).toEqual([
       "RIFF",
@@ -26,13 +28,13 @@ describe("encodeWav", () => {
   });
 
   it("copia as amostras logo após o cabeçalho", () => {
-    expect([...encodeWav(new Uint8Array([7, 8]), OPENAI_PCM_FORMAT).subarray(44)]).toEqual([7, 8]);
+    expect([...encodeWav(new Uint8Array([7, 8]), PCM_FORMAT).subarray(44)]).toEqual([7, 8]);
   });
 });
 
 describe("createPcmSilence", () => {
   it("gera bytes zerados na quantidade da duração pedida", () => {
-    const silence = createPcmSilence(500, OPENAI_PCM_FORMAT);
+    const silence = createPcmSilence(500, PCM_FORMAT);
     expect(silence.length).toBe(24_000);
     expect(silence.every((byte) => byte === 0)).toBe(true);
   });

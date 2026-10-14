@@ -1,29 +1,26 @@
+import type { AudioFormat, SpeechApi, SpeechRequest } from "../ports/speechApi.js";
 import { BRAZILIAN_NARRATION_INSTRUCTIONS } from "./brazilianNarration.js";
-import type { AudioFormat, SpeechApi, SpeechRequest } from "./speechApi.js";
 
-/** Limite de caracteres do campo `input` em `POST /v1/audio/speech`. */
-export const MAX_PARAGRAPH_LENGTH = 4096;
-
+/** Voz em branco fica com o padrão do provedor; instruções em branco, com a narração em PT-BR. */
 export interface SpeechOptions {
-  model?: string;
   voice?: string;
   format?: AudioFormat;
   instructions?: string;
 }
 
-// "marin" e "cedar" são as vozes de melhor qualidade segundo o guia de TTS da OpenAI.
-export const DEFAULT_SPEECH_OPTIONS = {
-  model: "gpt-4o-mini-tts",
-  voice: "marin",
-  format: "mp3",
+export const DEFAULT_AUDIO_FORMAT: AudioFormat = "mp3";
+
+// A narração em português do Brasil é do produto, não do provedor (ver 764396d): por isso fica no domínio.
+const DEFAULT_SPEECH_REQUEST = {
+  format: DEFAULT_AUDIO_FORMAT,
   instructions: BRAZILIAN_NARRATION_INSTRUCTIONS,
-} as const satisfies SpeechOptions;
+} as const satisfies Partial<SpeechRequest>;
 
 /**
  * Envia um parágrafo para a API de text-to-speech e devolve o áudio gerado.
  *
  * @example
- * const audio = await synthesizeParagraph("Olá, mundo.", new OpenAiSpeechApi(new OpenAI()));
+ * const audio = await synthesizeParagraph("Olá, mundo.", createOpenAiProvider(process.env).speech.create());
  * await writeFile("ola.mp3", audio);
  */
 export async function synthesizeParagraph(
@@ -31,27 +28,27 @@ export async function synthesizeParagraph(
   api: SpeechApi,
   options: SpeechOptions = {},
 ): Promise<Uint8Array> {
-  return api.createSpeech(buildSpeechRequest(paragraph, options));
+  return api.createSpeech(buildSpeechRequest(paragraph, api.maxInputLength, options));
 }
 
-function buildSpeechRequest(paragraph: string, options: SpeechOptions): SpeechRequest {
+function buildSpeechRequest(paragraph: string, maxLength: number, options: SpeechOptions): SpeechRequest {
   const text = paragraph.trim();
-  assertSpeakableText(text);
-  return { ...DEFAULT_SPEECH_OPTIONS, ...withoutUndefined(options), text };
+  assertSpeakableText(text, maxLength);
+  return { ...DEFAULT_SPEECH_REQUEST, ...withoutUndefined(options), text };
 }
 
-export function assertSpeakableText(text: string): void {
+export function assertSpeakableText(text: string, maxLength: number): void {
   if (text.length === 0) {
     throw new Error('Parágrafo vazio: "" (esperado: texto com pelo menos um caractere visível).');
   }
-  if (text.length > MAX_PARAGRAPH_LENGTH) {
+  if (text.length > maxLength) {
     throw new Error(
-      `Parágrafo com ${text.length} caracteres (esperado: no máximo ${MAX_PARAGRAPH_LENGTH}). Início: "${text.slice(0, 60)}…"`,
+      `Parágrafo com ${text.length} caracteres (esperado: no máximo ${maxLength}). Início: "${text.slice(0, 60)}…"`,
     );
   }
 }
 
-// Sem isso, `{ voice: undefined }` sobrescreveria o padrão no spread.
+// Sem isso, `{ format: undefined }` sobrescreveria o padrão no spread.
 function withoutUndefined(options: SpeechOptions): Partial<SpeechRequest> {
   return Object.fromEntries(Object.entries(options).filter(([, value]) => value !== undefined));
 }

@@ -1,4 +1,4 @@
-import { MAX_PARAGRAPH_LENGTH } from "../../speech/synthesizeParagraph.js";
+import { OPENAI_SPEECH_MAX_INPUT_LENGTH } from "../../adapters/openai/openAiSpeechApi.js";
 import { paragraphStatus, type ScriptProgress } from "./scriptProgress.js";
 
 /**
@@ -73,6 +73,6 @@ function createPlayButton(position: number): HTMLButtonElement {
 function createOverlongNote(length: number): HTMLParagraphElement {
   const note = document.createElement("p");
   note.className = "script-warning";
-  note.textContent = `${length} caracteres: a OpenAI aceita até ${MAX_PARAGRAPH_LENGTH}. Separe este trecho com uma linha em branco.`;
+  note.textContent = `${length} caracteres: a OpenAI aceita até ${OPENAI_SPEECH_MAX_INPUT_LENGTH}. Separe este trecho com uma linha em branco.`;
   return note;
 }

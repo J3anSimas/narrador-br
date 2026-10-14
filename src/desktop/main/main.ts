@@ -2,12 +2,12 @@ import { app, Menu, type BrowserWindow } from "electron";
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { createOpenAiProvider } from "../../adapters/openai/createOpenAiProvider.js";
 import { FfmpegAudioSpeedRenderer } from "../../audio/ffmpegAudioSpeedRenderer.js";
 import { FfmpegMp3Encoder } from "../../audio/ffmpegMp3Encoder.js";
 import type { AudioJobDependencies } from "../../jobs/audioJobDependencies.js";
 import { NodeAudioFileWriter } from "../../output/nodeAudioFileWriter.js";
 import { NodeSpeechAudioCache } from "../../output/nodeSpeechAudioCache.js";
-import { createOpenAiSpeechApi } from "../../speech/createOpenAiSpeechApi.js";
 import { ApiKeyStore } from "./apiKeyStore.js";
 import { handleAudioTrackProtocol, registerAudioTrackScheme } from "./audioTrackProtocol.js";
 import { AudioTrackRegistry } from "./audioTrackRegistry.js";
@@ -66,7 +66,7 @@ function createSpeedExporter(window: BrowserWindow, registry: AudioTrackRegistry
 
 function createJobDependencies(apiKey: string): AudioJobDependencies {
   return {
-    createSpeechApi: () => createOpenAiSpeechApi({ OPENAI_API_KEY: apiKey }),
+    createSpeechApi: () => createOpenAiProvider({ OPENAI_API_KEY: apiKey }).speech.create(),
     writer: new NodeAudioFileWriter(),
     mp3Encoder: new FfmpegMp3Encoder(ffmpegPath),
     createSpeechCache: (directory) => new NodeSpeechAudioCache(directory),

@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { runCli } from "../../src/cli/runCli.js";
-import type { SpeechApi, SpeechRequest } from "../../src/speech/speechApi.js";
+import type { SpeechApi, SpeechRequest } from "../../src/ports/speechApi.js";
+import { fakeAiProvider } from "../fakes/FakeAiProvider.js";
 import { FakeAudioFileWriter } from "../fakes/FakeAudioFileWriter.js";
-import { FakeSpeechApi } from "../fakes/FakeSpeechApi.js";
+import { FAKE_PCM_FORMAT, FakeSpeechApi } from "../fakes/FakeSpeechApi.js";
 import { FakeSpeechAudioCache } from "../fakes/FakeSpeechAudioCache.js";
 import { FakeTextInputSource } from "../fakes/FakeTextInputSource.js";
 import { FakeTextSink } from "../fakes/FakeTextSink.js";
@@ -10,6 +11,9 @@ import { FakeTextSink } from "../fakes/FakeTextSink.js";
 /** API que funciona até o N-ésimo pedido e então cai, como uma queda de rede no meio do texto. */
 class CrashingSpeechApi implements SpeechApi {
   readonly requests: SpeechRequest[] = [];
+  readonly model = "modelo-de-fala-falso";
+  readonly maxInputLength = 4096;
+  readonly pcmFormat = FAKE_PCM_FORMAT;
 
   constructor(private readonly crashOnRequestNumber: number) {}
 
@@ -39,7 +43,8 @@ async function runWith(api: SpeechApi, cache: FakeSpeechAudioCache, cacheDirs: s
     source: new FakeTextInputSource(new Map([["aula.txt", "Um.\n\nDois.\n\nTrês."]])),
     stdout,
     stderr: new FakeTextSink(),
-    audio: { createSpeechApi: () => api, writer, createSpeechCache },
+    ai: fakeAiProvider({ createSpeechApi: () => api }),
+    audio: { writer, createSpeechCache },
   });
   return { exitCode, writer, stdout };
 }

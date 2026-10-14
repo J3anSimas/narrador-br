@@ -1,6 +1,6 @@
 import { joinPcmSegments } from "../audio/joinPcmSegments.js";
-import { encodeWav, OPENAI_PCM_FORMAT } from "../audio/wav.js";
-import type { SpeechApi } from "./speechApi.js";
+import { encodeWav } from "../audio/wav.js";
+import type { SpeechApi } from "../ports/speechApi.js";
 import { synthesizeInOrder } from "./synthesizeInOrder.js";
 import type { SpeechOptions } from "./synthesizeParagraph.js";
 
@@ -34,5 +34,6 @@ export async function synthesizeParagraphsToWav(
     segments.push(pcm);
     deps.onParagraphSynthesized?.(segments.length, paragraphs.length);
   }
-  return encodeWav(joinPcmSegments(segments, pauseMs, OPENAI_PCM_FORMAT), OPENAI_PCM_FORMAT);
+  const { pcmFormat } = deps.api;
+  return encodeWav(joinPcmSegments(segments, pauseMs, pcmFormat), pcmFormat);
 }

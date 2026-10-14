@@ -4,20 +4,23 @@ import {
   type DesktopJobControllerDependencies,
 } from "../../src/desktop/main/desktopJobController.js";
 import type { DesktopJobEvent, DesktopJobRequest } from "../../src/desktop/shared/desktopBridge.js";
-import type { SpeechApi, SpeechRequest } from "../../src/speech/speechApi.js";
+import type { SpeechApi, SpeechRequest } from "../../src/ports/speechApi.js";
 import { FakeAudioFileWriter } from "../fakes/FakeAudioFileWriter.js";
 import { FakeSpeechApi } from "../fakes/FakeSpeechApi.js";
 import { FakeStructuredLogger } from "../fakes/FakeStructuredLogger.js";
 
 /** API que cancela a geração durante o primeiro pedido, como um clique em "Cancelar" no meio. */
-class CancelDuringFirstRequestSpeechApi implements SpeechApi {
-  readonly requests: SpeechRequest[] = [];
+class CancelDuringFirstRequestSpeechApi extends FakeSpeechApi {
   controller: DesktopJobController | undefined;
 
-  async createSpeech(request: SpeechRequest): Promise<Uint8Array> {
-    this.requests.push(request);
+  constructor() {
+    super(new Uint8Array([1, 0]));
+  }
+
+  override async createSpeech(request: SpeechRequest): Promise<Uint8Array> {
+    const audio = await super.createSpeech(request);
     this.controller?.cancel();
-    return new Uint8Array([1, 0]);
+    return audio;
   }
 }
 

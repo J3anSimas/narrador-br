@@ -4,7 +4,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { buildSpeedRenderArgs, FfmpegAudioSpeedRenderer } from "../../src/audio/ffmpegAudioSpeedRenderer.js";
-import { createPcmSilence, encodeWav, OPENAI_PCM_FORMAT } from "../../src/audio/wav.js";
+import { createPcmSilence, encodeWav } from "../../src/audio/wav.js";
+import { FAKE_PCM_FORMAT } from "../fakes/FakeSpeechApi.js";
 
 // Teste de integração com o executável real; pulado em máquinas sem ffmpeg.
 const hasFfmpeg = spawnSync("ffmpeg", ["-version"]).error === undefined;
@@ -13,13 +14,13 @@ const WAV_HEADER_SIZE = 44;
 function writeSilentWav(durationMs: number): { dir: string; inputPath: string } {
   const dir = mkdtempSync(join(tmpdir(), "tts-speed-"));
   const inputPath = join(dir, "entrada.wav");
-  writeFileSync(inputPath, encodeWav(createPcmSilence(durationMs, OPENAI_PCM_FORMAT), OPENAI_PCM_FORMAT));
+  writeFileSync(inputPath, encodeWav(createPcmSilence(durationMs, FAKE_PCM_FORMAT), FAKE_PCM_FORMAT));
   return { dir, inputPath };
 }
 
 // Aproximado: o ffmpeg pode gravar blocos extras (LIST) no cabeçalho, alguns bytes a mais.
 function wavDurationMs(path: string): number {
-  const bytesPerMs = (OPENAI_PCM_FORMAT.sampleRate * 2) / 1000;
+  const bytesPerMs = (FAKE_PCM_FORMAT.sampleRate * 2) / 1000;
   return (readFileSync(path).length - WAV_HEADER_SIZE) / bytesPerMs;
 }
 

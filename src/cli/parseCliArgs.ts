@@ -2,6 +2,7 @@ import { parseArgs } from "node:util";
 import { SINGLE_AUDIO_FORMATS, singleAudioFormatFromPath } from "../audio/singleAudioFormat.js";
 import type { InputRequest } from "../input/textInputSource.js";
 import { OUTPUT_FORMATS, type OutputFormat } from "../output/formatParagraphs.js";
+import type { AiProvider } from "../ports/aiProvider.js";
 
 import type { AudioFileRequest, AudioOutputRequest } from "../jobs/audioJobDependencies.js";
 
@@ -14,26 +15,46 @@ export interface CliOptions {
   outputFormat: OutputFormat;
   audio?: AudioOutputRequest;
   audioFile?: AudioFileRequest;
+  /** Modelo da LLM que adapta parágrafos acima do limite; sem ele, vale o padrão. */
+  rewriteModel?: string;
 }
 
-export const HELP_TEXT = `Uso: paragrafos [opções] [texto]
+/**
+ * Texto de ajuda, com os limites e padrões do provedor de IA configurado.
+ *
+ * @example helpText(createOpenAiProvider(process.env))
+ */
+export function helpText(ai: AiProvider): string {
+  const { name, setupHint, speech, rewrite } = ai;
+  const longParagraphs =
+    rewrite === undefined
+      ? "são divididos nos fins de frase"
+      : `são condensados e/ou\nquebrados em vários por uma LLM da ${name} (requer ${setupHint})`;
+  const rewriteModelOption =
+    rewrite === undefined
+      ? ""
+      : `  --rewrite-model <nome> modelo da ${name} que adapta parágrafos longos (padrão: ${rewrite.defaultModel})\n`;
+  return `Uso: paragrafos [opções] [texto]
 
-Separa um texto em parágrafos e, opcionalmente, os transforma em áudio.
+Separa um texto (ou PDF) em parágrafos e, opcionalmente, os transforma em áudio.
+Parágrafos com mais de ${speech.maxInputLength} caracteres (limite da API de fala) ${longParagraphs};
+os demais não são alterados.
 
 Entrada (escolha uma):
-  -f, --file <caminho>   lê o texto de um arquivo UTF-8
+  -f, --file <caminho>   lê um PDF (.pdf, extraindo o texto) ou um arquivo de texto UTF-8
   [texto]                usa o texto passado como argumento
   (stdin)                sem --file nem texto, lê do stdin (ex.: cat arquivo.txt | paragrafos)
 
 Opções:
   --format <text|json>   formato de saída (padrão: text)
   --audio-file <x.mp3|x.wav>
-                         gera um único áudio com todos os parágrafos (requer OPENAI_API_KEY no .env;
+                         gera um único áudio com todos os parágrafos (requer ${setupHint};
                          .mp3 também requer ffmpeg no PATH)
-  --audio <pasta>        gera paragrafo-001.mp3, paragrafo-002.mp3... na pasta (requer OPENAI_API_KEY no .env)
-  --voice <nome>         voz da OpenAI usada com --audio-file ou --audio (padrão: marin)
-  -h, --help             mostra esta ajuda
+  --audio <pasta>        gera paragrafo-001.mp3, paragrafo-002.mp3... na pasta (requer ${setupHint})
+  --voice <nome>         voz da ${name} usada com --audio-file ou --audio (padrão: ${speech.defaultVoice})
+${rewriteModelOption}  -h, --help             mostra esta ajuda
 `;
+}
 
 const CLI_OPTION_SPEC = {
   file: { type: "string", short: "f" },
@@ -41,6 +62,7 @@ const CLI_OPTION_SPEC = {
   audio: { type: "string" },
   "audio-file": { type: "string" },
   voice: { type: "string" },
+  "rewrite-model": { type: "string" },
   help: { type: "boolean", short: "h", default: false },
 } as const;
 
@@ -56,6 +78,7 @@ export function parseCliArgs(argv: readonly string[]): CliOptions {
     input: toInputRequest(values.file, positionals),
     outputFormat: toOutputFormat(values.format),
     ...toAudioRequests({ outputDir: values.audio, outputPath: values["audio-file"], voice: values.voice }),
+    ...toRewriteModel(values["rewrite-model"]),
   };
 }
 
@@ -68,6 +91,14 @@ function toInputRequest(filePath: string | undefined, positionals: readonly stri
   if (filePath !== undefined) return { kind: "file", path: filePath };
   if (positionals.length > 0) return { kind: "inline", text: positionals.join(" ") };
   return { kind: "stdin" };
+}
+
+function toRewriteModel(rawModel: string | undefined): Pick<CliOptions, "rewriteModel"> {
+  if (rawModel === undefined) return {};
+  if (rawModel.trim().length === 0) {
+    throw new Error(`--rewrite-model vazio (recebido: "${rawModel}"; esperado: nome de modelo).`);
+  }
+  return { rewriteModel: rawModel.trim() };
 }
 
 function toOutputFormat(rawFormat: string | undefined): OutputFormat {

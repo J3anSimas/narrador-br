@@ -1,4 +1,5 @@
-import type { SpeechApi, SpeechRequest } from "../../speech/speechApi.js";
+import type { PcmFormat } from "../../audio/wav.js";
+import type { SpeechApi, SpeechRequest } from "../../ports/speechApi.js";
 
 export class JobCancelledError extends Error {
   constructor() {
@@ -18,6 +19,18 @@ export class AbortableSpeechApi implements SpeechApi {
     private readonly inner: SpeechApi,
     private readonly signal: AbortSignal,
   ) {}
+
+  get model(): string {
+    return this.inner.model;
+  }
+
+  get maxInputLength(): number {
+    return this.inner.maxInputLength;
+  }
+
+  get pcmFormat(): PcmFormat {
+    return this.inner.pcmFormat;
+  }
 
   async createSpeech(request: SpeechRequest): Promise<Uint8Array> {
     if (this.signal.aborted) throw new JobCancelledError();

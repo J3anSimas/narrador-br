@@ -1,6 +1,6 @@
 import type { Mp3Encoder } from "../audio/mp3Encoder.js";
 import type { AudioFileWriter } from "../output/audioFileWriter.js";
-import type { SpeechApi } from "../speech/speechApi.js";
+import type { SpeechApi } from "../ports/speechApi.js";
 import type { SpeechAudioCache } from "../speech/speechAudioCache.js";
 
 /** Pedido de gerar um arquivo de áudio por parágrafo dentro de `outputDir`. */

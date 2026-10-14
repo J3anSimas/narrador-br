@@ -23,7 +23,6 @@ describe("synthesizeParagraphs", () => {
     );
     expect(api.requests).toEqual([{
       text: "Um.",
-      model: "gpt-4o-mini-tts",
       voice: "cedar",
       format: "wav",
       instructions: BRAZILIAN_NARRATION_INSTRUCTIONS,

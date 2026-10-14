@@ -1,4 +1,4 @@
-import { MAX_PARAGRAPH_LENGTH } from "../../speech/synthesizeParagraph.js";
+import { OPENAI_SPEECH_MAX_INPUT_LENGTH } from "../../adapters/openai/openAiSpeechApi.js";
 import type { DesktopJobEvent, DesktopJobResult } from "../shared/desktopBridge.js";
 
 export type ParagraphStatus = "pending" | "current" | "done";
@@ -71,5 +71,5 @@ export function describeJobResult(result: DesktopJobResult): string | undefined 
  * @example findOverlongParagraphs(["curto", "x".repeat(5000)]) // [2]
  */
 export function findOverlongParagraphs(paragraphs: readonly string[]): number[] {
-  return paragraphs.flatMap((paragraph, index) => (paragraph.trim().length > MAX_PARAGRAPH_LENGTH ? [index + 1] : []));
+  return paragraphs.flatMap((paragraph, index) => (paragraph.trim().length > OPENAI_SPEECH_MAX_INPUT_LENGTH ? [index + 1] : []));
 }

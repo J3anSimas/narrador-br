@@ -2,10 +2,14 @@ import type { AudioFileRequest, AudioJobDependencies, AudioOutputRequest } from 
 import type { AudioJobEvent, AudioJobListener } from "../jobs/audioJobEvent.js";
 import { runParagraphAudioJob } from "../jobs/paragraphAudioJob.js";
 import { runSingleAudioJob } from "../jobs/singleAudioJob.js";
+import type { SpeechApi } from "../ports/speechApi.js";
 import type { TextSink } from "./runCli.js";
 
-/** Dependências só usadas com --audio / --audio-file. */
-export type AudioCliDependencies = AudioJobDependencies;
+/** Dependências só usadas com --audio / --audio-file; a API de fala vem do provedor de IA. */
+export type AudioCliDependencies = Omit<AudioJobDependencies, "createSpeechApi">;
+
+/** As dependências de áudio mais a API de fala, criada só quando há áudio a gerar. */
+export type AudioOutputDependencies = AudioCliDependencies & { api: SpeechApi };
 
 /**
  * Grava um arquivo de áudio por parágrafo, listando cada um no stdout.
@@ -15,10 +19,10 @@ export type AudioCliDependencies = AudioJobDependencies;
 export async function writeParagraphsAsAudioFiles(
   paragraphs: readonly string[],
   request: AudioOutputRequest,
-  audio: AudioCliDependencies,
+  audio: AudioOutputDependencies,
   stdout: TextSink,
 ): Promise<void> {
-  await runParagraphAudioJob(paragraphs, request, audio, printAudioJobEvents(stdout));
+  await runParagraphAudioJob(paragraphs, request, toJobDependencies(audio), printAudioJobEvents(stdout));
 }
 
 /**
@@ -29,10 +33,14 @@ export async function writeParagraphsAsAudioFiles(
 export async function writeParagraphsAsSingleAudio(
   paragraphs: readonly string[],
   request: AudioFileRequest,
-  audio: AudioCliDependencies,
+  audio: AudioOutputDependencies,
   stdout: TextSink,
 ): Promise<void> {
-  await runSingleAudioJob(paragraphs, request, audio, printAudioJobEvents(stdout));
+  await runSingleAudioJob(paragraphs, request, toJobDependencies(audio), printAudioJobEvents(stdout));
+}
+
+function toJobDependencies({ api, ...audio }: AudioOutputDependencies): AudioJobDependencies {
+  return { ...audio, createSpeechApi: () => api };
 }
 
 function printAudioJobEvents(stdout: TextSink): AudioJobListener {

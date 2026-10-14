@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { AudioJobEvent } from "../../src/jobs/audioJobEvent.js";
 import { runSingleAudioJob } from "../../src/jobs/singleAudioJob.js";
 import { speechCacheKey } from "../../src/speech/cachingSpeechApi.js";
-import { DEFAULT_SPEECH_OPTIONS } from "../../src/speech/synthesizeParagraph.js";
+import { BRAZILIAN_NARRATION_INSTRUCTIONS } from "../../src/speech/brazilianNarration.js";
 import { FakeAudioFileWriter } from "../fakes/FakeAudioFileWriter.js";
 import { FakeMp3Encoder } from "../fakes/FakeMp3Encoder.js";
 import { FakeSpeechApi } from "../fakes/FakeSpeechApi.js";
@@ -23,10 +23,11 @@ describe("runSingleAudioJob", () => {
   it("avisa a pasta de progresso e quantos parágrafos vieram do cache", async () => {
     const events: AudioJobEvent[] = [];
     const cache = new FakeSpeechAudioCache();
-    const cachedRequest = { ...DEFAULT_SPEECH_OPTIONS, format: "pcm" as const, text: "Um." };
-    cache.audioByKey.set(speechCacheKey(cachedRequest), new Uint8Array([1, 0]));
+    const api = new FakeSpeechApi(new Uint8Array([1, 0]));
+    const cachedRequest = { text: "Um.", format: "pcm" as const, instructions: BRAZILIAN_NARRATION_INSTRUCTIONS };
+    cache.audioByKey.set(speechCacheKey(api.model, cachedRequest), new Uint8Array([1, 0]));
     const deps = {
-      createSpeechApi: () => new FakeSpeechApi(new Uint8Array([1, 0])),
+      createSpeechApi: () => api,
       writer: new FakeAudioFileWriter(),
       createSpeechCache: () => cache,
     };

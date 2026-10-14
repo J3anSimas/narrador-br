@@ -1,7 +1,7 @@
 import type { Mp3Encoder } from "../audio/mp3Encoder.js";
 import { singleAudioFormatFromPath } from "../audio/singleAudioFormat.js";
 import { CachingSpeechApi } from "../speech/cachingSpeechApi.js";
-import type { SpeechApi } from "../speech/speechApi.js";
+import type { SpeechApi } from "../ports/speechApi.js";
 import type { SpeechAudioCache } from "../speech/speechAudioCache.js";
 import { synthesizeParagraphsToWav } from "../speech/synthesizeParagraphsToWav.js";
 import type { AudioFileRequest, AudioJobDependencies } from "./audioJobDependencies.js";
