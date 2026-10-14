@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { OpenAiSpeechApi } from "../../../src/adapters/openai/openAiSpeechApi.js";
-import { FakeOpenAiSpeechEndpoint } from "./FakeOpenAiSpeechEndpoint.js";
+import { FakeDroppingOpenAiSpeechEndpoint, FakeOpenAiSpeechEndpoint } from "./FakeOpenAiSpeechEndpoint.js";
 
 describe("OpenAiSpeechApi", () => {
   it("traduz o pedido para os parâmetros do SDK", async () => {
@@ -45,5 +45,13 @@ describe("OpenAiSpeechApi", () => {
   it("permite dois pedidos de fala em paralelo", () => {
     const api = new OpenAiSpeechApi(new FakeOpenAiSpeechEndpoint(new Uint8Array()));
     expect(api.maxConcurrentRequests).toBe(2);
+  });
+
+  it("diz em que parágrafo a conexão caiu e guarda o erro original como causa", async () => {
+    const terminated = new TypeError("terminated");
+    const api = new OpenAiSpeechApi(new FakeDroppingOpenAiSpeechEndpoint(terminated));
+    const attempt = api.createSpeech({ text: "Fiz o deploy da API.", format: "mp3" });
+    await expect(attempt).rejects.toThrow(/interrompida ao receber o áudio do parágrafo "Fiz o deploy da API\./);
+    await expect(attempt).rejects.toHaveProperty("cause", terminated);
   });
 });

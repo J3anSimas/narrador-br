@@ -24,6 +24,15 @@ class CancelDuringFirstRequestSpeechApi extends FakeSpeechApi {
   }
 }
 
+/** API cuja conexão cai como no `fetch` do Node: "terminated" por fora, o motivo real na causa. */
+class TerminatedSpeechApi extends FakeSpeechApi {
+  override async createSpeech(request: SpeechRequest): Promise<Uint8Array> {
+    await super.createSpeech(request);
+    const socketError = Object.assign(new Error("other side closed"), { code: "UND_ERR_SOCKET" });
+    throw new TypeError("terminated", { cause: socketError });
+  }
+}
+
 // O áudio único emenda PCM de 16 bits: o fake precisa devolver um número par de bytes.
 const PCM_SAMPLE = new Uint8Array([1, 0]);
 const SINGLE: DesktopJobRequest = { mode: "singleFile", text: "Um.\n\nDois.", voice: "marin", outputPath: "a.wav" };
@@ -84,6 +93,13 @@ describe("DesktopJobController", () => {
     expect(result).toMatchObject({ status: "failed", message: expect.stringMatching(/5000 caracteres/) });
     expect(logger.entries[0]).toMatchObject({ level: "error", fields: { mode: "singleFile" } });
     expect(await controller.start(SINGLE, () => undefined)).toEqual({ status: "done" });
+  });
+
+  it("mostra a causa real quando a API falha só com 'terminated'", async () => {
+    const { controller, logger } = controllerWith(new TerminatedSpeechApi());
+    const result = await controller.start(SINGLE, () => undefined);
+    expect(result).toEqual({ status: "failed", message: "terminated → other side closed [UND_ERR_SOCKET]" });
+    expect(logger.entries[0]).toMatchObject({ fields: { error: "terminated → other side closed [UND_ERR_SOCKET]" } });
   });
 
   it("recusa uma segunda geração enquanto a primeira roda", async () => {

@@ -70,4 +70,15 @@ describe("runCli com --audio", () => {
     expect(await runCli(["-f", "aula.txt", "--audio", "saida"], depsWithoutAudio)).toBe(1);
     expect(deps.stderr.written).toMatch(/"saida".*deps\.audio/);
   });
+
+  it("mostra no stderr a causa real de um erro de rede", async () => {
+    const { deps } = createAudioDependencies("Um.");
+    const terminated = new TypeError("terminated", { cause: new Error("other side closed") });
+    const createSpeechApi = (): SpeechApi => {
+      throw terminated;
+    };
+    const failingDeps = { ...deps, ai: fakeAiProvider({ createSpeechApi }) };
+    expect(await runCli(["-f", "aula.txt", "--audio", "saida"], failingDeps)).toBe(1);
+    expect(deps.stderr.written).toMatch(/^Erro: terminated → other side closed/);
+  });
 });

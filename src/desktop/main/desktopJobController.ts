@@ -2,6 +2,7 @@ import type { AudioJobDependencies } from "../../jobs/audioJobDependencies.js";
 import type { AudioJobListener } from "../../jobs/audioJobEvent.js";
 import { runParagraphAudioJob } from "../../jobs/paragraphAudioJob.js";
 import { runSingleAudioJob } from "../../jobs/singleAudioJob.js";
+import { describeErrorChain } from "../../errors/describeErrorChain.js";
 import { splitParagraphs } from "../../paragraphs/splitParagraphs.js";
 import type { DesktopJobEvent, DesktopJobRequest, DesktopJobResult } from "../shared/desktopBridge.js";
 import { AbortableSpeechApi, JobCancelledError } from "./abortableSpeechApi.js";
@@ -82,7 +83,8 @@ export class DesktopJobController {
 
   private toFailedResult(error: unknown, request: DesktopJobRequest): DesktopJobResult {
     if (error instanceof JobCancelledError) return { status: "cancelled" };
-    const message = error instanceof Error ? error.message : String(error);
+    // A cadeia inteira: só `error.message` mostrava "terminated" sem dizer o motivo.
+    const message = describeErrorChain(error);
     this.deps.logger.log("error", "desktop job failed", { mode: request.mode, error: message });
     return { status: "failed", message };
   }

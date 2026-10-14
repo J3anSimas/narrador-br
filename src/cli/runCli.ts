@@ -1,3 +1,4 @@
+import { describeErrorChain } from "../errors/describeErrorChain.js";
 import { readInputText, type TextInputSource } from "../input/textInputSource.js";
 import { formatParagraphs } from "../output/formatParagraphs.js";
 import { fitParagraphsToLimit } from "../paragraphs/fitParagraphsToLimit.js";
@@ -45,7 +46,8 @@ export async function runCli(argv: readonly string[], deps: CliDependencies): Pr
     await writeParagraphs(paragraphs, options, deps);
     return 0;
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    // A cadeia inteira: erros de rede do fetch dizem só "terminated" e guardam o motivo na causa.
+    const message = describeErrorChain(error);
     deps.stderr.write(`Erro: ${message}\n\n${helpText(deps.ai)}`);
     return 1;
   }

@@ -38,7 +38,7 @@ export class OpenAiSpeechApi implements SpeechApi {
 
   async createSpeech(request: SpeechRequest): Promise<Uint8Array> {
     const response = await this.endpoint.create(this.toSpeechCreateParams(request));
-    return new Uint8Array(await response.arrayBuffer());
+    return readSpeechAudio(response, request.text);
   }
 
   private toSpeechCreateParams(request: SpeechRequest): SpeechCreateParams {
@@ -49,5 +49,17 @@ export class OpenAiSpeechApi implements SpeechApi {
       response_format: request.format,
       ...(request.instructions !== undefined && { instructions: request.instructions }),
     };
+  }
+}
+
+// O SDK só trata erros até os cabeçalhos; se a conexão cair durante o corpo, o `fetch`
+// rejeita com um "terminated" sem contexto. A causa original fica em `cause`.
+async function readSpeechAudio(response: Response, text: string): Promise<Uint8Array> {
+  try {
+    return new Uint8Array(await response.arrayBuffer());
+  } catch (error) {
+    throw new Error(`Conexão com a OpenAI interrompida ao receber o áudio do parágrafo "${text.slice(0, 60)}…"`, {
+      cause: error,
+    });
   }
 }

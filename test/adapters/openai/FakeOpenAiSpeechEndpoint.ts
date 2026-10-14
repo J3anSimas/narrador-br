@@ -13,3 +13,18 @@ export class FakeOpenAiSpeechEndpoint implements OpenAiSpeechEndpoint {
     return new Response(this.audio);
   }
 }
+
+/** Responde os cabeçalhos e derruba a conexão no meio do corpo, como o `fetch` do Node faz ("terminated"). */
+export class FakeDroppingOpenAiSpeechEndpoint implements OpenAiSpeechEndpoint {
+  constructor(private readonly bodyError: Error) {}
+
+  async create(): Promise<Response> {
+    const bodyError = this.bodyError;
+    const body = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        controller.error(bodyError);
+      },
+    });
+    return new Response(body);
+  }
+}
